@@ -51,7 +51,6 @@ import {
   Grid
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { 
   db, 
   auth, 
@@ -97,8 +96,6 @@ const AutoReelApp = () => {
   
   const [cloudProjects, setCloudProjects] = useState<any[]>([]);
   const [isLoadingCloud, setIsLoadingCloud] = useState(false);
-
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "AI_KEY");
   
   // Editing States
   const [editMode, setEditMode] = useState<'trim' | 'crop' | 'text' | 'layers' | 'audio' | 'config' | 'templates' | null>(null);
@@ -397,12 +394,21 @@ const AutoReelApp = () => {
     if (!formData.theme) return alert("Please enter a theme first!");
     setIsAIScripting(true);
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const prompt = `Create a viral ${formData.destination} script for a ${formData.duration}s video about: ${formData.theme}. 
-      Visual direction: The video should follow a high-quality "${formData.artStyle}" art style aesthetic. 
-      Provide a logical structure with scenes, captions, and visual cues.`;
-      const result = await model.generateContent(prompt);
-      setFormData(prev => ({ ...prev, script: result.response.text() }));
+      const response = await fetch('/api/script', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          theme: formData.theme,
+          destination: formData.destination,
+          duration: formData.duration,
+          artStyle: formData.artStyle
+        })
+      });
+      const data = await response.json();
+      setFormData(prev => ({
+        ...prev,
+        script: data?.script || "Default scripting template active."
+      }));
     } catch (error) {
       console.error(error);
       setFormData(prev => ({ ...prev, script: "Default scripting template active." }));

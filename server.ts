@@ -5,6 +5,7 @@ import ffmpeg from 'fluent-ffmpeg';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import dotenv from 'dotenv';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 dotenv.config();
 
@@ -15,6 +16,8 @@ if (process.env.FFMPEG_PATH) {
 if (process.env.FFPROBE_PATH) {
   ffmpeg.setFfprobePath(process.env.FFPROBE_PATH);
 }
+
+const aiClient = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -65,6 +68,25 @@ async function startServer() {
       videoUrl: mockVideoLink,
       estimatedTime: '45 seconds'
     });
+  });
+
+  app.post('/api/script', async (req, res) => {
+    try {
+      const { theme, destination, duration, artStyle } = req.body;
+      if (!aiClient) {
+        return res.json({ script: 'Default scripting template active.' });
+      }
+      const model = aiClient.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const prompt = `Create a viral ${destination} script for a ${duration}s video about: ${theme}. Visual direction: The video should follow a high-quality "${artStyle}" art style aesthetic. Provide a logical structure with scenes, captions, and visual cues.`;
+      const result = await model.generateContent(prompt);
+      const script = typeof result.response?.text === 'function'
+        ? result.response.text()
+        : String(result.response || '');
+      res.json({ script });
+    } catch (error) {
+      console.error('AI script generation failed:', error);
+      res.status(500).json({ script: 'Default scripting template active.' });
+    }
   });
 
   // Vite middleware for development
