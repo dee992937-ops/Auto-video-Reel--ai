@@ -1,0 +1,40 @@
+{
+  "entities": {
+    "Project": {
+      "title": "Project",
+      "description": "A video project draft containing all configuration for generation.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "The display name of the project." },
+        "formData": { "type": "object", "description": "The serialized form state of the project." },
+        "userId": { "type": "string", "description": "The UID of the owner." },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "formData", "userId", "createdAt", "updatedAt"]
+    },
+    "UserTemplate": {
+      "title": "UserTemplate",
+      "description": "A custom user-created style template.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Template name." },
+        "config": { "type": "object", "description": "Template configuration object." },
+        "userId": { "type": "string", "description": "The UID of the owner." },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "config", "userId", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "projects": {
+      "schema": "Project",
+      "description": "Collection of user video projects."
+    },
+    "userTemplates": {
+      "schema": "UserTemplate",
+      "description": "Collection of user-created layout templates."
+    }
+  }
+}
