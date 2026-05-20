@@ -48,7 +48,8 @@ import {
   LogOut,
   User,
   RefreshCw,
-  Grid
+  Grid,
+  Pencil
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -271,18 +272,39 @@ const AutoReelApp = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const aiArtStyles = [
-    { id: 'standard', name: 'Standard', desc: 'Realistic & high quality', icon: <Camera size={16} /> },
-    { id: 'cyberpunk', name: 'Cyberpunk', desc: 'Neon lights & futuristic glitch', icon: <Cpu size={16} /> },
-    { id: 'anime', name: 'Anime Pro', icon: <Palette size={16} />, desc: 'Studio Ghibli inspired vibrant colors' },
-    { id: 'oil_painting', name: 'Classic Oil', icon: <Layers size={16} />, desc: 'Textured brush strokes & rich tones' },
-    { id: 'surreal', name: 'Surrealism', icon: <Sparkles size={16} />, desc: 'Dreamy & abstract compositions' },
-    { id: 'pixel', name: 'Retro Pixel', icon: <Grid size={16} />, desc: '8-bit nostalgic game aesthetic' }
+    { id: 'AUTOREELS', name: 'AUTOREELS', desc: 'Default high-speed reel production style', icon: <Sparkles size={16} /> },
+    { id: 'COMIC_BOOK', name: 'COMIC BOOK', desc: 'Bold panels, halftone inks & dramatic captions', icon: <BookOpen size={16} /> },
+    { id: 'DISNEY_TOON', name: 'DISNEY TOON', desc: 'Playful animation with warm colors and soft edges', icon: <Camera size={16} /> },
+    { id: 'STEAMPUNK', name: 'STEAMPUNK', desc: 'Retro-futuristic brass machinery and Victorian detail', icon: <Layers size={16} /> },
+    { id: 'SURREALISM', name: 'SURREALISM', desc: 'Dreamlike visuals with unexpected composition', icon: <Sparkles size={16} /> },
+    { id: 'VINTAGE_CARTOON', name: 'VINTAGE CARTOON', desc: 'Old-school hand-drawn nostalgic animation', icon: <Palette size={16} /> },
+    { id: 'NEON_VAPORWAVE', name: 'NEON VAPORWAVE', desc: 'Bold neon pastels, retro-futuristic vibes', icon: <Cpu size={16} /> },
+    { id: 'PENCIL_SKETCH', name: 'PENCIL SKETCH', desc: 'Monochrome lines, shading and textured strokes', icon: <Pencil size={16} /> },
+    { id: 'RETRO_80S_90S', name: 'RETRO 80s/90s', desc: 'Vintage synthwave, VHS glow and arcade nostalgia', icon: <Grid size={16} /> },
+    { id: 'GRUNGE', name: 'GRUNGE', desc: 'Raw texture, contrast and gritty atmosphere', icon: <ShieldAlert size={16} /> },
+    { id: 'ILLUSTRATIVE_REALISM', name: 'ILLUSTRATIVE REALISM', desc: 'Highly detailed realistic illustration style', icon: <Layers size={16} /> },
+    { id: 'IMPRESSIONISM', name: 'IMPRESSIONISM', desc: 'Painterly brush strokes and expressive colors', icon: <Palette size={16} /> },
+    { id: 'FANTASY_ANIME', name: 'FANTASY ANIME', desc: 'Lush anime scenery with dramatic fantasy creatures', icon: <Sparkles size={16} /> },
+    { id: 'FANTASY_REALISM', name: 'FANTASY REALISM', desc: 'Epic fantasy scenes with lifelike detail', icon: <Camera size={16} /> },
+    { id: 'FLAT_ART', name: 'FLAT ART', desc: 'Minimal shapes, bright colors and graphic clarity', icon: <Grid size={16} /> },
+    { id: 'PIXAR', name: 'PIXAR', desc: 'Modern 3D-inspired polished character animation', icon: <Layers size={16} /> },
+    { id: 'ART_DECO', name: 'ART DECO', desc: 'Stylized geometry and luxe gold color palettes', icon: <Sparkles size={16} /> },
+    { id: 'BLACK_WHITE_NOIR', name: 'BLACK & WHITE NOIR', desc: 'High-contrast cinematic monochrome drama', icon: <Camera size={16} /> },
+    { id: 'CYBERPUNK', name: 'CYBERPUNK', desc: 'Glitchy neon cityscapes and urban tech futures', icon: <Cpu size={16} /> },
+    { id: 'CHARCOAL', name: 'CHARCOAL', desc: 'Deep black charcoal lines and smoky shading', icon: <ShieldAlert size={16} /> },
+    { id: 'GTA_V', name: 'GTA V', desc: 'Urban game art style with bold outlines and cinematic color', icon: <Video size={16} /> },
+    { id: 'ANIME', name: 'ANIME', desc: 'Classic anime visuals with crisp color and motion', icon: <Palette size={16} /> }
   ];
+
+  const getArtStylePrompt = (styleId: string) => {
+    const normalized = styleId.replace(/_/g, ' ');
+    return `in ${normalized} style, high quality`;
+  };
 
   const [formData, setFormData] = useState({
     platform: 'tiktok',
     aspectRatio: '9:16',
-    artStyle: 'standard',
+    artStyle: 'AUTOREELS',
     voice: 'marin',
     script: '',
     music: 'energetic',
@@ -393,6 +415,7 @@ const AutoReelApp = () => {
   const generateAIScript = async () => {
     if (!formData.theme) return alert("Please enter a theme first!");
     setIsAIScripting(true);
+    setStatusMessage('Composing script with deterministic Gemini instructions...');
     try {
       const response = await fetch('/api/script', {
         method: 'POST',
@@ -409,11 +432,64 @@ const AutoReelApp = () => {
         ...prev,
         script: data?.script || "Default scripting template active."
       }));
+      setStatusMessage('Script ready. Ready for production.');
     } catch (error) {
       console.error(error);
       setFormData(prev => ({ ...prev, script: "Default scripting template active." }));
+      setStatusMessage('Script generation failed, using fallback template.');
     } finally {
       setIsAIScripting(false);
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!formData.theme) return alert('Enter a theme first.');
+    if (!formData.script) await generateAIScript();
+    setIsGenerating(true);
+    setGenerationProgress(0);
+    setStatusMessage('Building the deterministic media pipeline...');
+
+    const progressInterval = setInterval(() => {
+      setGenerationProgress(prev => {
+        if (prev >= 98) return 98;
+        return prev + 2;
+      });
+    }, 250);
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          theme: formData.theme,
+          destination: formData.destination,
+          duration: formData.duration,
+          artStyle: formData.artStyle,
+          script: formData.script,
+          subtitleConfig: {
+            position: formData.subtitlePosition,
+            font: formData.subtitleFont,
+            color: formData.subtitleColor,
+            size: formData.subtitleSize,
+            bold: formData.subtitleBold,
+            shadow: formData.subtitleShadow,
+            shadowColor: formData.subtitleShadowColor
+          },
+          musicKeyword: formData.selectedTrackName
+        })
+      });
+      const data = await response.json();
+      clearInterval(progressInterval);
+      setGenerationProgress(100);
+      setStatusMessage(data?.message || 'Production complete.');
+      setResult({ success: true, url: data?.videoUrl ?? '', pipeline: data?.pipeline });
+    } catch (error) {
+      clearInterval(progressInterval);
+      console.error('Production failed:', error);
+      setStatusMessage('Production failed. Check server logs.');
+      setResult({ success: false, url: '', error: error?.message || 'Production error' });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -423,30 +499,6 @@ const AutoReelApp = () => {
       setPlayingTrack(null);
     } else {
       setPlayingTrack(trackUrl);
-    }
-  };
-
-  const handleGenerate = async () => {
-    setIsGenerating(true);
-    setGenerationProgress(0);
-    const interval = setInterval(() => {
-      setGenerationProgress(prev => {
-        if (prev >= 98) return 98;
-        return prev + 2;
-      });
-    }, 200);
-    try {
-      // Simulate real process
-      setTimeout(() => {
-        clearInterval(interval);
-        setGenerationProgress(100);
-        setResult({ success: true, url: 'demo' });
-      }, 5000);
-    } catch (error) {
-      clearInterval(interval);
-      console.error(error);
-    } finally {
-      setIsGenerating(false);
     }
   };
 
@@ -803,6 +855,9 @@ const AutoReelApp = () => {
                         style={{ aspectRatio: cropRatio.replace(':', '/'), maxHeight: '500px', width: cropRatio === '9:16' ? 'auto' : '100%' }}
                      >
                         <Play size={48} className="text-white/40 cursor-pointer hover:scale-110 transition-transform" />
+                        {result?.url && (
+                           <a href={result.url} target="_blank" rel="noreferrer" className="absolute inset-x-0 bottom-6 mx-auto w-fit px-6 py-3 bg-[#FF1E6C] text-white rounded-full font-bold text-sm shadow-xl shadow-[#FF1E6C]/30">Watch generated reel</a>
+                        )}
                         
                         {overlayText && (
                            <motion.div 

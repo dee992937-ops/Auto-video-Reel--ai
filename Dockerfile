@@ -1,23 +1,20 @@
-# Build stage
-FROM node:20-bullseye AS builder
+FROM python:3.10-slim
+
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    git \
+    fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt ./
+RUN python -m pip install --no-cache-dir --upgrade pip && \
+    python -m pip install --no-cache-dir -r requirements.txt
 
 COPY . ./
-RUN npm run build
 
-# Production stage
-FROM node:20-bullseye-slim
-WORKDIR /app
+RUN mkdir -p /app/output /app/temp
 
-COPY package*.json ./
-RUN npm ci --production
-
-COPY --from=builder /app/dist ./dist
-COPY server.js ./
-
-ENV NODE_ENV=production
-EXPOSE 3000
-CMD ["node", "server.js"]
+EXPOSE 7860
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
